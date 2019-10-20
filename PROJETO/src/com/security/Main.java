@@ -5,6 +5,7 @@ import java.net.Socket;
 
 public class Main {
     private static int i = 0;
+    private static SharedTableList tableList = new SharedTableList();
     public static void main(String[] args) {
         try {
             ServerSocket server = new ServerSocket(7000);
@@ -22,10 +23,12 @@ public class Main {
 
     public static void wait_for_clients(ServerSocket server, SharedQueue queue) throws Exception{
         Thread t;
+
+
         Socket p = server.accept();
         String name = "Client ";
         Client c = new Client(p, name+i, ClientState.AUTHENTICATION);
-        ThreadServer.ServerThread tServer = new ThreadServer.ServerThread(p, name+i, c, queue);
+        ThreadServer.ServerThread tServer = new ThreadServer.ServerThread(p, name+i, c, queue, tableList);
         t = new Thread(tServer);
         t.setName(name+i);
         c.setThread(t);

@@ -29,6 +29,7 @@ public class SharedQueue extends AbstractQueue {
             try {
                 this.queue.add(val);
                 System.out.println(Thread.currentThread().getName() + " Added: " + val);
+
                 return true;
             }
             finally

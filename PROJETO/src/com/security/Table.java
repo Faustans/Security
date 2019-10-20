@@ -16,7 +16,6 @@ public class Table implements Runnable{
 
 
     public Table(int maxPlayers, SharedQueue queue, boolean rand, Client Creator){
-        this.t = Thread.currentThread();
         this.creator = Creator;
         this.maxPlayers = maxPlayers;
         this.c = new Client[maxPlayers];
@@ -25,12 +24,6 @@ public class Table implements Runnable{
         this.state = GameState.WAITING_FOR_PLAYERS;
         this.currPlayers = 1;
         this.randomness = rand;
-        try{
-            this.c[0].getData();
-        }
-        catch (Exception e){
-
-        }
 
         if(this.randomness){
             pickRandomPlayers(maxPlayers-1);
@@ -38,6 +31,26 @@ public class Table implements Runnable{
         }
     public void addPlayer(Client c){
         this.c[currPlayers] = c;
+        this.currPlayers++;
+        System.out.println(c.getName());
+    }
+
+    public void setThread(Thread t){
+        this.t = t;
+    }
+
+    public int getCurrPlayers(){
+        return this.currPlayers;
+    }
+
+    public void getPlayers(){
+        for (int i = 0; i < this.c.length; i++) {
+            if(c[i]!=null){
+                System.out.println(c[i]);
+                System.out.println("-------------");
+            }
+
+        }
     }
 
     public void pickRandomPlayers(int amount) {

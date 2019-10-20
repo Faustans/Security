@@ -15,18 +15,21 @@ public class ThreadServer {
         String name;
         Client clientClass;
         SharedQueue queue;
-        private int nTables;
+        private SharedTableList tableList;
+        private boolean joined;
 
-    public ServerThread(Socket c, String name, Client clientClass, SharedQueue queue) {
+    public ServerThread(Socket c, String name, Client clientClass, SharedQueue queue, SharedTableList tableList) {
         this.client = c;
         this.name = name;
         this.clientClass = clientClass;
         this.queue = queue;
-        this.nTables = 0;
+        this.tableList = tableList;
+        this.joined=false;
     }
 
     public void run() {
-       test();
+        test();
+
 
 
     }
@@ -38,7 +41,23 @@ public class ThreadServer {
         try {
             boolean abc = this.current.getName().equals(name);
             System.out.println("Connected to client : "+this.client.getInetAddress().getHostAddress());
-            while(true) {create_table();
+            while(true) {
+                /*
+                * VERIFICAR SE JÀ EXISTE ALGUMA TABLE CRIADA -> Shared TAble List
+                 */
+                synchronized (this) {
+                    if (this.tableList.size() >= 1 && !joined) {
+                        join_table();
+                        this.clientClass.getData();
+                    } else if (this.tableList.size()<1 && !joined){
+                        create_table();
+                        this.clientClass.getData();
+                    }
+                    else{
+                        this.clientClass.getData();
+                    }
+                }
+
                 //DataInputStream data = new DataInputStream(this.client.getInputStream());
                 //String r = data.readUTF();
                 //System.out.println(r);
@@ -61,13 +80,27 @@ public class ThreadServer {
     public void create_table(){
         Table table = new Table(4, this.queue, this.clientClass.getRandomness(), this.clientClass);
         Thread thread = new Thread(table);
-        thread.setName("Table" + nTables);
+        thread.setName("Table" + tableList.size());
+        table.setThread(thread);
+        synchronized (this){
+            tableList.add(table);
+        }
         thread.start();
-        nTables++;
+        this.joined=true;
         this.clientClass.setTable(table);
+        System.out.println(tableList.get().getCurrPlayers());
     }
 
-    public static void join_table(){
+    public void join_table(){
+        Table t = tableList.get();
+        tableList.remove(t);
+        t.addPlayer(clientClass);
+        t.getPlayers();
+        this.clientClass.setTable(t);
+        tableList.add(t);
+        tableList.get();
+        this.joined=true;
+        System.out.println(tableList.get().getCurrPlayers());
     }
 
     public static void wait_for_players(){

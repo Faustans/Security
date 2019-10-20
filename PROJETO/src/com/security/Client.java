@@ -52,6 +52,10 @@ public class Client {
         return this.randomness;
     }
 
+    public String getName(){
+        return this.name;
+    }
+
     public int getBet() {
         return bet;
     }
@@ -63,11 +67,9 @@ public class Client {
     public void getData()throws Exception{
         DataInputStream data = new DataInputStream(this.s.getInputStream());
         String r = data.readUTF();
-        System.out.println(thread.getName());
-        System.out.println(thread.getId());
-        System.out.println(Thread.currentThread().getName());
-        System.out.println(Thread.currentThread().getId());
-        System.out.println(name);
         System.out.println(r);
+        System.out.println(table.getCurrPlayers());
+        System.out.println(table);
+
     }
 }
