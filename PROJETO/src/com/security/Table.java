@@ -5,6 +5,7 @@ import java.util.*;
 public class Table implements Runnable{
 
     private Thread t;
+    private String name;
     private Client creator;
     private int maxPlayers;
     private int currPlayers;
@@ -43,11 +44,18 @@ public class Table implements Runnable{
         return this.currPlayers;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+    public String getName(){
+        return this.name;
+    }
+
     public void getPlayers(){
+        String res = "";
         for (int i = 0; i < this.c.length; i++) {
-            if(c[i]!=null){
-                System.out.println(c[i]);
-                System.out.println("-------------");
+            if(c[i]!=null) {
+                res += c[i] + " ";
             }
 
         }
@@ -60,6 +68,11 @@ public class Table implements Runnable{
         //TODO
         /* PROCESS QUEUE INFORMATION */
         /* CHANGE STATE OF PLAYERS AND TABLE*/
+        if(this.maxPlayers==this.currPlayers){
+            for(int i = 0; i< c.length;i++){
+                c[i].setState(ClientState.GAME_STARTING);
+            }
+        }
 
     }
 }

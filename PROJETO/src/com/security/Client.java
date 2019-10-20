@@ -48,6 +48,14 @@ public class Client {
         this.randomness = rand;
     }
 
+    public void setState(ClientState state){
+        this.state = state;
+    }
+
+    public ClientState getState(){
+        return this.state;
+    }
+
     public boolean getRandomness(){
         return this.randomness;
     }

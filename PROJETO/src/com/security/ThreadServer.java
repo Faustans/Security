@@ -49,6 +49,10 @@ public class ThreadServer {
                  */
                 synchronized (this) {
                     System.out.println(create_join_table());
+
+
+                    wait_for_players();
+
                     if (this.tableList.size() >= 1 && !joined) {
                         join_table();
                         this.clientClass.getData();
@@ -93,6 +97,7 @@ public class ThreadServer {
         Table table = new Table(4, this.queue, this.clientClass.getRandomness(), this.clientClass);
         Thread thread = new Thread(table);
         thread.setName("Table" + tableList.size());
+        table.setName("Table" + tableList.size());
         table.setThread(thread);
         synchronized (this){
             tableList.add(table);
@@ -113,16 +118,52 @@ public class ThreadServer {
         this.joined = true;
     }
 
-    public static void wait_for_players(){
+    public void wait_for_players() throws Exception{
+        clientClass.setState(ClientState.WAITING_FOR_PLAYERS);
+        System.out.println("In-----------------------");
+        DataOutputStream data = new DataOutputStream(this.client.getOutputStream());
+        String r = "wait";
+        data.writeUTF(r);
+        data.flush();
+
+        while (this.clientClass.getState() == ClientState.WAITING_FOR_PLAYERS){
+            Thread.sleep((long)(Math.random()*500));
+        }
+        if(this.clientClass.getState() == ClientState.GAME_STARTING){
+            gameStarting();
+        }
     }
 
-    public static void provideIdentity(){
+    public void provideIdentity(){
+
     }
 
-    public static void gameStarting(){
+    public void gameStarting()  throws Exception{
+        while (this.clientClass.getState() == ClientState.WAITING_FOR_PLAYERS){
+            Thread.sleep((long)(Math.random()*500));
+        }
+        if(this.clientClass.getState() == ClientState.BETTING){
+            bet();
+        }
     }
 
-    public static void bet(){}
+    public void bet() throws Exception{
+        System.out.println("In-----------------------");
+        DataOutputStream data = new DataOutputStream(this.client.getOutputStream());
+        String r = "bet";
+        data.writeUTF(r);
+        data.flush();
+
+        DataInputStream response = new DataInputStream(this.client.getInputStream());
+        int resp = Integer.parseInt(response.readUTF());
+        clientClass.setBet(resp);
+
+        while (this.clientClass.getState() == ClientState.BETTING){
+            Thread.sleep((long)(Math.random()*500));
+        }
+        this.clientClass.setState(ClientState.SHUFFLING);
+        shuffle();
+    }
 
     public static void shuffle(){
     }
