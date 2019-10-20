@@ -6,6 +6,7 @@ import java.net.Socket;
 public class Main {
     private static int i = 0;
     private static SharedTableList tableList = new SharedTableList();
+    private static SharedPlayersList playersList = new SharedPlayersList();
     public static void main(String[] args) {
         try {
             ServerSocket server = new ServerSocket(7000);
@@ -28,7 +29,8 @@ public class Main {
         Socket p = server.accept();
         String name = "Client ";
         Client c = new Client(p, name+i, ClientState.AUTHENTICATION);
-        ThreadServer.ServerThread tServer = new ThreadServer.ServerThread(p, name+i, c, queue, tableList);
+        playersList.add(c);
+        ThreadServer.ServerThread tServer = new ThreadServer.ServerThread(p, name+i, c, queue, tableList, playersList);
         t = new Thread(tServer);
         t.setName(name+i);
         c.setThread(t);

@@ -67,9 +67,8 @@ public class Client {
     public void getData()throws Exception{
         DataInputStream data = new DataInputStream(this.s.getInputStream());
         String r = data.readUTF();
+
         System.out.println(r);
-        System.out.println(table.getCurrPlayers());
-        System.out.println(table);
 
     }
 }

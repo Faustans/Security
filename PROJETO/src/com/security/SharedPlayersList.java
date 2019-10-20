@@ -7,7 +7,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class SharedTableList {
+public class SharedPlayersList{
 
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
@@ -15,12 +15,12 @@ public class SharedTableList {
 
     private final Lock writeLock = readWriteLock.writeLock();
 
-    private ArrayList<Table> tableList = new ArrayList<>();
+    private ArrayList<Client> tableList = new ArrayList<>();
 
-    public SharedTableList(){
+    public SharedPlayersList(){
     }
 
-    public boolean add(Table val){
+    public boolean add(Client val){
         try{
             writeLock.lock();
             try {
@@ -37,7 +37,7 @@ public class SharedTableList {
         return false;
     }
 
-    public Table get(){
+    public Client get(){
 
         try {
             readLock.lock();
@@ -50,7 +50,7 @@ public class SharedTableList {
 
     }
 
-    public boolean remove(Table t){
+    public boolean remove(Client t){
         try{
             writeLock.lock();
             try {

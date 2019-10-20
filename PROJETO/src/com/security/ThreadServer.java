@@ -17,14 +17,16 @@ public class ThreadServer {
         SharedQueue queue;
         private SharedTableList tableList;
         private boolean joined;
+        private SharedPlayersList playerList;
 
-    public ServerThread(Socket c, String name, Client clientClass, SharedQueue queue, SharedTableList tableList) {
+    public ServerThread(Socket c, String name, Client clientClass, SharedQueue queue, SharedTableList tableList, SharedPlayersList playersList) {
         this.client = c;
         this.name = name;
         this.clientClass = clientClass;
         this.queue = queue;
         this.tableList = tableList;
         this.joined=false;
+        this.playerList = playersList;
     }
 
     public void run() {
@@ -88,10 +90,9 @@ public class ThreadServer {
         thread.start();
         this.joined=true;
         this.clientClass.setTable(table);
-        System.out.println(tableList.get().getCurrPlayers());
     }
 
-    public void join_table(){
+    public void join_table() {
         Table t = tableList.get();
         tableList.remove(t);
         t.addPlayer(clientClass);
@@ -99,8 +100,7 @@ public class ThreadServer {
         this.clientClass.setTable(t);
         tableList.add(t);
         tableList.get();
-        this.joined=true;
-        System.out.println(tableList.get().getCurrPlayers());
+        this.joined = true;
     }
 
     public static void wait_for_players(){
