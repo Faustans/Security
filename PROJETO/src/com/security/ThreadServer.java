@@ -48,6 +48,7 @@ public class ThreadServer {
                 * VERIFICAR SE JÀ EXISTE ALGUMA TABLE CRIADA -> Shared TAble List
                  */
                 synchronized (this) {
+                    System.out.println(create_join_table());
                     if (this.tableList.size() >= 1 && !joined) {
                         join_table();
                         this.clientClass.getData();
@@ -75,8 +76,17 @@ public class ThreadServer {
 
     public void checkOnlinePlayers(){}
 
-    public static boolean create_join_table(){
-        return true;
+    public boolean create_join_table() throws IOException {
+        System.out.println("In-----------------------");
+        DataOutputStream data = new DataOutputStream(this.client.getOutputStream());
+        String r = "join-create";
+        data.writeUTF(r);
+        data.flush();
+
+        DataInputStream response = new DataInputStream(this.client.getInputStream());
+        boolean resp = Boolean.parseBoolean(response.readUTF());
+
+        return resp;
     }
 
     public void create_table(){
