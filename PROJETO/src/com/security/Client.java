@@ -11,7 +11,7 @@ public class Client {
     private Socket s;
     private String name;
     private Thread thread;
-    private ClientState state;//enum with current available states
+    private volatile ClientState state;//enum with current available states
     private boolean randomness;
     private int bet;
     private Table table;
@@ -43,16 +43,21 @@ public class Client {
     public void setTableJoin(boolean val){
         this.tableJoin = val;
     }
-
+    public Table getTable(){
+        return this.table;
+    }
     public void setRandomness(boolean rand){
         this.randomness = rand;
     }
 
-    public void setState(ClientState state){
+    public Socket getSocket(){
+        return this.s;
+    }
+    public synchronized void setState(ClientState state){
         this.state = state;
     }
 
-    public ClientState getState(){
+    public synchronized ClientState getState(){
         return this.state;
     }
 

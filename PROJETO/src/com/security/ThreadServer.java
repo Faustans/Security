@@ -1,6 +1,8 @@
 package com.security;
 
 
+import javafx.scene.control.Tab;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.Socket;
@@ -30,6 +32,9 @@ public class ThreadServer {
     }
 
     public void run() {
+        synchronized (this){
+            this.clientClass = playerList.get(playerList.index(clientClass.getName()));
+        }
         test();
 
 
@@ -48,20 +53,42 @@ public class ThreadServer {
                 * VERIFICAR SE JÀ EXISTE ALGUMA TABLE CRIADA -> Shared TAble List
                  */
                 synchronized (this) {
-                    System.out.println(create_join_table());
+                    create_join_table();
 
 
                     wait_for_players();
+                    boolean temp = true;
+                    while(temp){
+                        if(playerList.get(playerList.index(clientClass.getName())).getState() == ClientState.GAME_STARTING){
+                            System.out.println("Got In-----------");
+                            gameStarting();
+                            temp = false;
+                        }
+                        else{
+                            Thread.sleep(500);
+                        }
+                    }
+                    boolean temp1 = true;
+                    while(temp1){
+                        if(this.playerList.get(playerList.index(clientClass.getName())).getState()  == ClientState.BETTING){
+                            bet();
+                        }
+                        else{
+                            Thread.sleep(500);
+                        }
+                    }
+
+
 
                     if (this.tableList.size() >= 1 && !joined) {
-                        join_table();
-                        this.clientClass.getData();
+                        //join_table(1);
+                        this.playerList.get(playerList.index(clientClass.getName())).getData();
                     } else if (this.tableList.size()<1 && !joined){
-                        create_table();
-                        this.clientClass.getData();
+                        //create_table();
+                        this.playerList.get(playerList.index(clientClass.getName())).getData();
                     }
                     else{
-                        this.clientClass.getData();
+                        this.playerList.get(playerList.index(clientClass.getName())).getData();
                     }
                 }
 
@@ -80,7 +107,7 @@ public class ThreadServer {
 
     public void checkOnlinePlayers(){}
 
-    public boolean create_join_table() throws IOException {
+    public void create_join_table() throws IOException {
         System.out.println("In-----------------------");
         DataOutputStream data = new DataOutputStream(this.client.getOutputStream());
         String r = "join-create";
@@ -89,62 +116,133 @@ public class ThreadServer {
 
         DataInputStream response = new DataInputStream(this.client.getInputStream());
         boolean resp = Boolean.parseBoolean(response.readUTF());
+        /**
+        * @true  -> show all tables     -> join table
+        * @false -> show all players    -> create table
+         */
 
-        return resp;
-    }
+        if(resp){
+            data = new DataOutputStream(this.client.getOutputStream());
+            r = "";
+            for(int i=0; i<tableList.size();i++){
+                Table t = tableList.get(i);
+                r += t.getName() + " \n";
+            }
+            data.writeUTF(r);
+            data.flush();
+            /**
+             * @ "-1"  -> Randomness True
+             * @ "> -1" -> Select Table
+             */
+            response = new DataInputStream(this.client.getInputStream());
+            int out = Integer.parseInt(response.readUTF());
 
-    public void create_table(){
-        Table table = new Table(4, this.queue, this.clientClass.getRandomness(), this.clientClass);
-        Thread thread = new Thread(table);
-        thread.setName("Table" + tableList.size());
-        table.setName("Table" + tableList.size());
-        table.setThread(thread);
-        synchronized (this){
-            tableList.add(table);
+            join_table(out);
+
         }
-        thread.start();
-        this.joined=true;
-        this.clientClass.setTable(table);
+        else{
+            data = new DataOutputStream(this.client.getOutputStream());
+            r = "";
+            for(int i=0; i<playerList.size();i++){
+                Client t = playerList.get(i);
+                r += t.getName() + " \n";
+            }
+            data.writeUTF(r);
+            data.flush();
+
+            response = new DataInputStream(this.client.getInputStream());
+            int out = Integer.parseInt(response.readUTF());
+            create_table(out);
+        }
     }
 
-    public void join_table() {
-        Table t = tableList.get();
-        tableList.remove(t);
-        t.addPlayer(clientClass);
-        t.getPlayers();
-        this.clientClass.setTable(t);
-        tableList.add(t);
-        tableList.get();
-        this.joined = true;
+    public void create_table(int maxPlayers){
+        synchronized (this) {
+            Table table = new Table(maxPlayers, this.queue, this.playerList.get(playerList.index(clientClass.getName())).getRandomness(), this.playerList.get(playerList.index(clientClass.getName())), this.playerList);
+            Thread thread = new Thread(table);
+            thread.setName("Table" + tableList.size());
+            table.setName("Table" + tableList.size());
+            table.setThread(thread);
+
+            tableList.add(table);
+
+            thread.start();
+            this.joined = true;
+
+
+            int pos = playerList.index(clientClass.getName());
+            Client c = playerList.get(pos);
+            playerList.remove(c);
+            c.setTable(table);
+            c.setState(ClientState.WAITING_FOR_PLAYERS);
+            playerList.add(c);
+        }
+    }
+
+    public void join_table(int val) {
+        synchronized (this){
+            Table t = tableList.get(val);
+            tableList.remove(t);
+            synchronized (this){
+                t.addPlayer(playerList.get(playerList.index(clientClass.getName())));
+            }
+            Client c = playerList.get(playerList.index(clientClass.getName()));
+            playerList.remove(c);
+            c.setTable(t);
+            tableList.add(t);
+            this.joined = true;
+
+
+            c.setState(ClientState.WAITING_FOR_PLAYERS);
+            playerList.add(c);
+        }
     }
 
     public void wait_for_players() throws Exception{
-        clientClass.setState(ClientState.WAITING_FOR_PLAYERS);
-        System.out.println("In-----------------------");
+
+
         DataOutputStream data = new DataOutputStream(this.client.getOutputStream());
         String r = "wait";
         data.writeUTF(r);
         data.flush();
 
-        while (this.clientClass.getState() == ClientState.WAITING_FOR_PLAYERS){
-            Thread.sleep((long)(Math.random()*500));
-        }
-        if(this.clientClass.getState() == ClientState.GAME_STARTING){
-            gameStarting();
-        }
+        //DataInputStream response = new DataInputStream(this.client.getInputStream());
+       // System.out.println(response.readUTF());
+
+
+        while (playerList.get(playerList.index(clientClass.getName())).getState() == ClientState.WAITING_FOR_PLAYERS){
+           /* if(this.clientClass.getTable().getCurrPlayers()== this.clientClass.getTable().getcurrPlayers()){
+                this.clientClass.setState(ClientState.GAME_STARTING);
+            }*/
+           Thread.sleep((long)Math.random()*250);
+
+
+            }
+
+
     }
 
     public void provideIdentity(){
 
     }
 
-    public void gameStarting()  throws Exception{
-        while (this.clientClass.getState() == ClientState.WAITING_FOR_PLAYERS){
-            Thread.sleep((long)(Math.random()*500));
+    public synchronized void gameStarting()  throws Exception{
+        while (this.playerList.get(playerList.index(clientClass.getName())).getState()  == ClientState.GAME_STARTING){
+            System.out.println("GAME IS STARTING");
+
+            int pos = playerList.index(clientClass.getName());
+            Client c = playerList.get(pos);
+            playerList.remove(c);
+
+            c.setState(ClientState.BETTING);
+            playerList.add(c);
+
+            DataInputStream response = new DataInputStream(this.client.getInputStream());
+            String resp = response.readUTF();
+            System.out.println(resp);
+
         }
-        if(this.clientClass.getState() == ClientState.BETTING){
-            bet();
-        }
+
     }
 
     public void bet() throws Exception{
@@ -158,10 +256,15 @@ public class ThreadServer {
         int resp = Integer.parseInt(response.readUTF());
         clientClass.setBet(resp);
 
-        while (this.clientClass.getState() == ClientState.BETTING){
+        while (this.playerList.get(playerList.index(clientClass.getName())).getState() == ClientState.BETTING){
             Thread.sleep((long)(Math.random()*500));
         }
-        this.clientClass.setState(ClientState.SHUFFLING);
+        int pos = playerList.index(clientClass.getName());
+        Client c = playerList.get(pos);
+        playerList.remove(c);
+
+        c.setState(ClientState.SHUFFLING);
+        playerList.add(c);
         shuffle();
     }
 

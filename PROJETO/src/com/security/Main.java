@@ -22,18 +22,19 @@ public class Main {
 
 
 
-    public static void wait_for_clients(ServerSocket server, SharedQueue queue) throws Exception{
+    public synchronized static void wait_for_clients(ServerSocket server, SharedQueue queue) throws Exception{
         Thread t;
 
 
         Socket p = server.accept();
         String name = "Client ";
         Client c = new Client(p, name+i, ClientState.AUTHENTICATION);
-        playersList.add(c);
+
         ThreadServer.ServerThread tServer = new ThreadServer.ServerThread(p, name+i, c, queue, tableList, playersList);
         t = new Thread(tServer);
         t.setName(name+i);
         c.setThread(t);
+        playersList.add(c);
         i++;
         t.start();
 

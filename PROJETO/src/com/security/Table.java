@@ -14,9 +14,10 @@ public class Table implements Runnable{
     private GameState state;
     private Map<String,Integer> bets = new HashMap<String, Integer>();
     private boolean randomness;
+    private SharedPlayersList playersList;
 
 
-    public Table(int maxPlayers, SharedQueue queue, boolean rand, Client Creator){
+    public Table(int maxPlayers, SharedQueue queue, boolean rand, Client Creator, SharedPlayersList playersList){
         this.creator = Creator;
         this.maxPlayers = maxPlayers;
         this.c = new Client[maxPlayers];
@@ -25,15 +26,15 @@ public class Table implements Runnable{
         this.state = GameState.WAITING_FOR_PLAYERS;
         this.currPlayers = 1;
         this.randomness = rand;
+        this.playersList = playersList;
 
         if(this.randomness){
             pickRandomPlayers(maxPlayers-1);
             }
         }
-    public void addPlayer(Client c){
+    public synchronized void addPlayer(Client c){
         this.c[currPlayers] = c;
         this.currPlayers++;
-        System.out.println(c.getName());
     }
 
     public void setThread(Thread t){
@@ -63,15 +64,40 @@ public class Table implements Runnable{
 
     public void pickRandomPlayers(int amount) {
     }
+
+    public int getMaxPlayers(){
+        return this.maxPlayers;
+    }
+    public int getcurrPlayers(){
+        return this.currPlayers;
+    }
+
     @Override
-    public void run() {
+    public void run(){
         //TODO
         /* PROCESS QUEUE INFORMATION */
         /* CHANGE STATE OF PLAYERS AND TABLE*/
-        if(this.maxPlayers==this.currPlayers){
-            for(int i = 0; i< c.length;i++){
-                c[i].setState(ClientState.GAME_STARTING);
+        boolean done = false;
+        while(!done){
+            synchronized (this) {
+                if (this.maxPlayers == this.currPlayers) {
+                    for (int i = 0; i < c.length; i++) {
+                        int pos = playersList.index(c[i].getName());
+                        Client cl = playersList.get(pos);
+                        playersList.remove(cl);
+
+                        cl.setState(ClientState.GAME_STARTING);
+                        playersList.add(cl);
+
+
+                    }
+                    System.out.println("Setting state");
+                    done = true;
+                }
             }
+
+
+
         }
 
     }

@@ -37,11 +37,11 @@ public class SharedTableList {
         return false;
     }
 
-    public Table get(){
+    public Table get(int i){
 
         try {
             readLock.lock();
-            return tableList.get(0);
+            return tableList.get(i);
         }
         finally {
             readLock.unlock();

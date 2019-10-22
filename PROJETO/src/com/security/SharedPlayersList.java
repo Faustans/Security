@@ -36,12 +36,20 @@ public class SharedPlayersList{
         }
         return false;
     }
+    public int index(String name){
+        for(int i = 0; i<tableList.size(); i++){
+            if(tableList.get(i).getName().equals(name)) {
+                return i;
+            }
+        }
+        return 0;
+    }
 
-    public Client get(){
+    public Client get(int i){
 
         try {
             readLock.lock();
-            return tableList.get(0);
+            return tableList.get(i);
         }
         finally {
             readLock.unlock();
