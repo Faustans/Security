@@ -84,6 +84,7 @@ public class ThreadServer {
             String r = "join-create";
             JSONObject js = new JSONObject();
             js.put("val", r);
+            js.put("id",Integer.parseInt(this.clientClass.getName().split("")[1]));
             data.writeUTF(js.toString());
             data.flush();
 

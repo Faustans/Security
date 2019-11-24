@@ -21,6 +21,7 @@ public class Client {
         String temp;
         String displayBytes;
         boolean deckReceived = false;
+        int id;
 
         byte[] deck = new byte[52];
         try {
@@ -41,7 +42,7 @@ public class Client {
 
                     switch (disp.getString("val").toLowerCase()){
                         case("create-join"):
-
+                            id = disp.getInt("id");
                             break;
                         case("shuffle"):
                             System.out.println("Got deck");
