@@ -15,7 +15,7 @@ public class SharedTableList {
 
     private final Lock writeLock = readWriteLock.writeLock();
 
-    private ArrayList<Table> tableList = new ArrayList<>();
+    private Map<String,Table> tableList = new HashMap<>();
 
     public SharedTableList(){
     }
@@ -24,7 +24,7 @@ public class SharedTableList {
         try{
             writeLock.lock();
             try {
-                this.tableList.add(val);
+                this.tableList.put(val.getName(), val);
                 return true;
             }
             finally
@@ -37,11 +37,21 @@ public class SharedTableList {
         return false;
     }
 
-    public Table get(int i){
+    public void replace(String name, Table val){
+        try{
+            writeLock.lock();
+            tableList.replace(name, val);
+        }
+        finally {
+            writeLock.unlock();
+        }
+    }
+
+    public Table get(String name){
 
         try {
             readLock.lock();
-            return tableList.get(i);
+            return tableList.get(name);
         }
         finally {
             readLock.unlock();
@@ -49,12 +59,18 @@ public class SharedTableList {
 
 
     }
+    public Collection<Table> getAll(){
+        return tableList.values();
+    }
 
-    public boolean remove(Table t){
+
+    public boolean remove(String name){
         try{
             writeLock.lock();
             try {
-                boolean out =  this.tableList.remove(t);
+                //boolean out =  this.tableList.remove(t);
+                boolean out =  this.tableList.containsKey(name);
+                this.tableList.remove(name);
                 return out;
             }
             finally

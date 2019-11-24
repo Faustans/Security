@@ -32,6 +32,16 @@ public enum GameState {
     CARD_DISTRIBUTION ("Dist"),
 
     /**
+     * Committing to the cards.
+     */
+    DECK_COMMITMENT ("Commitment"),
+
+    /**
+     * Revealing the cards.
+     */
+    REVELATION_STAGE ("Revelation"),
+
+    /**
      * Play.
      */
     PLAY ("Play"),

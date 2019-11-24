@@ -16,11 +16,12 @@ public class Client {
     private int bet;
     private Table table;
     private boolean tableJoin;
-
+    private int num;
     public Client(Socket s, String name, ClientState state){
         this.s = s;
         this.name = name;
         this.state = state;
+        this.bet = 0;
     }
 
     public void setThread(Thread thread) {
@@ -33,6 +34,14 @@ public class Client {
 
     public void setBet(int bet){
         this.bet = bet;
+    }
+
+    public void setNum(int num){
+        this.num=num;
+    }
+
+    public int getNum(){
+        return this.num;
     }
 
     /**
@@ -53,11 +62,11 @@ public class Client {
     public Socket getSocket(){
         return this.s;
     }
-    public synchronized void setState(ClientState state){
+    public void setState(ClientState state){
         this.state = state;
     }
 
-    public synchronized ClientState getState(){
+    public  ClientState getState(){
         return this.state;
     }
 

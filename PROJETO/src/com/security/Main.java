@@ -28,13 +28,15 @@ public class Main {
 
         Socket p = server.accept();
         String name = "Client ";
-        Client c = new Client(p, name+i, ClientState.AUTHENTICATION);
+        Client c = new Client(p, name+i, ClientState.CREATE_OR_JOIN_TABLE);
 
         ThreadServer.ServerThread tServer = new ThreadServer.ServerThread(p, name+i, c, queue, tableList, playersList);
         t = new Thread(tServer);
         t.setName(name+i);
         c.setThread(t);
-        playersList.add(c);
+        synchronized (playersList){
+            playersList.add(c);
+        }
         i++;
         t.start();
 

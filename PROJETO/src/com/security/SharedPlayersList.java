@@ -17,6 +17,8 @@ public class SharedPlayersList{
 
     private ArrayList<Client> tableList = new ArrayList<>();
 
+    private Map<String,Client> playList = new HashMap<>();
+
     public SharedPlayersList(){
     }
 
@@ -24,7 +26,9 @@ public class SharedPlayersList{
         try{
             writeLock.lock();
             try {
-                this.tableList.add(val);
+                //this.tableList.add(val);
+                //adicionar ao hashmap
+                this.playList.put(val.getName(), val);
                 return true;
             }
             finally
@@ -36,20 +40,37 @@ public class SharedPlayersList{
         }
         return false;
     }
+
     public int index(String name){
-        for(int i = 0; i<tableList.size(); i++){
+        /*for(int i = 0; i<tableList.size(); i++){
             if(tableList.get(i).getName().equals(name)) {
                 return i;
             }
-        }
+        }*/
         return 0;
     }
 
-    public Client get(int i){
+    //Replace current associated client with updated one
+    public void replace(String name, Client val){
+        try{
+            writeLock.lock();
+            playList.replace(name, val);
+        }
+        finally {
+            writeLock.unlock();
+        }
+    }
+
+    public Collection<Client> getAll(){
+        return playList.values();
+    }
+
+    //Get is set
+    public Client get(String name){
 
         try {
             readLock.lock();
-            return tableList.get(i);
+            return this.playList.get(name);
         }
         finally {
             readLock.unlock();
@@ -58,11 +79,14 @@ public class SharedPlayersList{
 
     }
 
-    public boolean remove(Client t){
+    //Remove um cliente do mapa
+    public boolean remove(String name){
         try{
             writeLock.lock();
             try {
-                boolean out =  this.tableList.remove(t);
+                //boolean out =  this.tableList.remove(t);
+                boolean out =  this.playList.containsKey(name);
+                this.playList.remove(name);
                 return out;
             }
             finally
@@ -79,12 +103,13 @@ public class SharedPlayersList{
     public int size(){
         readLock.lock();
         try {
-            return this.tableList.size();
+            return this.playList.size();
         }
         finally
         {
             readLock.unlock();
         }
     }
+
 }
 
