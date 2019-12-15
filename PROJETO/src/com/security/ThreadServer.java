@@ -108,7 +108,8 @@ public class ThreadServer {
                     r += iC.next().getName() + " \n";
                 }
                 js = new JSONObject();
-                js.put("val", r);
+                js.put("val", "info");
+                js.put("info", r);
                 data.writeUTF(js.toString());
                 data.flush();
                 /**
@@ -134,7 +135,8 @@ public class ThreadServer {
                     r += iC.next().getName() + " \n";
                 }
                 js = new JSONObject();
-                js.put("val", r);
+                js.put("val", "info");
+                js.put("info", r);
                 data.writeUTF(js.toString());
                 data.flush();
 

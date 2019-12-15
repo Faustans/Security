@@ -1,4 +1,5 @@
 //package com.security;
+//package com.sec61;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -16,13 +17,21 @@ public class Client {
     static byte[] myCards;
     static int numPlayers;
     static int cardsPicked = 0;
+    static int id;
+
+    static byte[] play;
+    static int[] order;
+
+    static byte[] myInitialCards;
+    static boolean firstPlay = true;
 
     public static void main(String[] args) {
         String temp;
         String displayBytes;
         boolean deckReceived = false;
-        int id;
+        boolean playing = false;
 
+        firstPlay = true;
         byte[] deck = new byte[52];
         try {
             //create input stream
@@ -39,10 +48,26 @@ public class Client {
                     String val = disp.getString("val") ;
                     System.out.println(val);
                     System.out.println("-----------------------");
+                    JSONObject js = new JSONObject();
 
-                    switch (disp.getString("val").toLowerCase()){
-                        case("create-join"):
+
+                    String sw = disp.getString("val").toLowerCase();
+                    System.out.println(sw);
+                    switch (sw){
+                        case("info"):
+                            System.out.println(disp.getString("info"));
+                            System.out.print("Command : ");
+                            temp = inFromUser.readLine();
+                            js.put("val", temp);
+                            System.out.println("Got info");
+                            System.out.println(js.toString());
+                            break;
+                        case("join-create"):
                             id = disp.getInt("id");
+                            System.out.print("Command : ");
+                            temp = inFromUser.readLine();
+
+                            js.put("val", temp);
                             break;
                         case("shuffle"):
                             System.out.println("Got deck");
@@ -52,6 +77,10 @@ public class Client {
                             myCards = new byte[Double.valueOf(52/numPlayers).intValue()];
                             deck = shuffleArray(deck);
                             cardsPicked = 0;
+
+                            js.put("val", "");
+                            System.out.println("Sending deck");
+                            js.put("deck",Base64.getEncoder().encodeToString(deck));
                             break;
                         case("distribute"):
                             System.out.println("Got deck");
@@ -65,36 +94,90 @@ public class Client {
                                 }
                                 System.out.println(sb.toString());
                             }
+
+                            js.put("val", "");
+                            System.out.println("Sending deck");
+                            js.put("deck",Base64.getEncoder().encodeToString(deck));
                             break;
+                        case("play"):
+                            if(firstPlay){
+                                myInitialCards = myCards;
+                                firstPlay = false;
+                            }
+                            deckReceived = false;
+                            playing = true;
+                            play = Base64.getDecoder().decode(disp.getString("play"));
 
+                            //order = (int[]) disp.get("order");
+                            JSONArray test = disp.getJSONArray("order");
+
+                            int[] newOrder = new int[test.length()+1];
+                            for(int i = 0; i< newOrder.length;i++){
+                                if(i==test.length()){
+                                    newOrder[i] = id;
+                                }
+                                else{
+                                    newOrder[i] = test.getInt(i);
+                                }
+                            }
+
+                            StringBuilder sb = new StringBuilder();
+                            for (byte b : myCards) {
+                                sb.append(String.format("%02X ", b));
+                            }
+                            System.out.println("My Cards: " + sb.toString());
+                            sb = new StringBuilder();
+                            for (byte b : play) {
+                                sb.append(String.format("%02X ", b));
+                            }
+                            System.out.println("Cards Played:" + sb.toString());
+                            System.out.print("Command : ");
+                            temp = inFromUser.readLine();
+                            //js.put("val", temp);
+                            byte[] newPlay = new byte[play.length+1];
+                            for(int i = 0; i< newPlay.length;i++){
+                                if(i==newOrder.length-1){
+                                    try{
+                                        newPlay[i] = hexStringToByteArray(temp)[0];
+                                    }
+                                    catch (Exception abc){
+                                        byte[] a = hexStringToByteArray(temp);
+                                        sb = new StringBuilder();
+                                        for (byte b : a) {
+                                            sb.append(String.format("%02X ", b));
+                                        }
+                                        System.out.println(sb.toString());
+                                        System.out.println(abc);
+                                    }
+                                }
+                                else{
+                                    newPlay[i] = play[i];
+                                }
+                            }
+                            for(int i = 0; i< myCards.length; i++){
+                                if(myCards[i] == hexStringToByteArray(temp)[0]){
+                                    myCards[i] = hexStringToByteArray("FF")[0];
+                                }
+                            }
+                            js.put("play",Base64.getEncoder().encodeToString(newPlay));
+                            js.put("order", newOrder);
+
+                            break;
                     }
-
-                  }
-                  catch(Exception e){
-
-                  }
-                DataOutputStream outToServer =
-                        new DataOutputStream(clientSocket.getOutputStream());
-
-                System.out.print("Command : ");
-
-                temp = inFromUser.readLine();
-                //send line to server
-                //outToServer.writeBytes(temp);
-
-                JSONObject js = new JSONObject();
-                js.put("val", temp);
-                if(deckReceived){
-                    System.out.println("Sending deck");
-                    js.put("deck",Base64.getEncoder().encodeToString(deck));
+                    System.out.println("Got to the end and js is : "+ js.toString());
+                    DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
+                    outToServer.writeUTF(js.toString());
+                    outToServer.flush();
                 }
-                outToServer.writeUTF(js.toString());
-                outToServer.flush();
+                catch(Exception e){
+                    System.out.println("Morreu aqi?");
+                    System.out.println(e);
+                }
             }
         }
         catch(Exception ex)
         {
-
+            System.out.println(ex);
         }
     }
 
@@ -166,6 +249,16 @@ public class Client {
 
     public static int indexOf(byte[] arr, byte val) {
         return IntStream.range(0, arr.length).filter(i -> arr[i] == val).findFirst().orElse(-1);
+    }
+
+    public static byte[] hexStringToByteArray(String s) {
+        int len = s.length();
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
+                    + Character.digit(s.charAt(i+1), 16));
+        }
+        return data;
     }
 
     public static byte[] shuffleArrayMaxSize(byte[] array,int max)
